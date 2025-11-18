@@ -1,247 +1,294 @@
-# La idea de este script es correr lo mismo que el jupyter pero con terminal, evitando incompatibilidades de kernel de jupyter con librerias
-
-
-
 from mpi4py import MPI
+from petsc4py import PETSc
 import numpy as np
-import ufl
-from dolfinx import mesh, fem, io, nls, log
+from basix.ufl import element, mixed_element
+from dolfinx import fem, io, mesh
 from dolfinx.fem.petsc import NonlinearProblem
 from dolfinx.nls.petsc import NewtonSolver
-import basix.ufl
+from ufl import (Identity, TestFunctions, TrialFunctions, split, 
+                 grad, det, tr, inner, derivative, dx, variable, inv, ln, TrialFunction)
+import ufl
+import os
+import tempfile
+import pickle
+from basix.cell import CellType
 
-# Malla y Espacio de Funciones (2D, memoria) 
-domain = mesh.create_unit_cube(MPI.COMM_WORLD, 1, 1, 1) 
-gdim = domain.geometry.dim
+# Cargar Malla! (Anillo)
+MESH_FILENAME = "simple_annulus_mesh.xdmf"
 
-cell_name_str = domain.topology.cell_name() 
-P2_vec = basix.ufl.element("Lagrange", cell_name_str, 2, shape=(gdim,))
-P1_scal = basix.ufl.element("Lagrange", cell_name_str, 1)
+try:
+    with io.XDMFFile(MPI.COMM_WORLD, MESH_FILENAME, "r") as xdmf:
+        domain = xdmf.read_mesh()
+    print(f"✓ Malla cargada: {MESH_FILENAME}")
+    
+    R_in = 0.1
+    R_out = 1.0
 
-W_elem = basix.ufl.mixed_element([P2_vec, P1_scal, P1_scal, P1_scal])
-W = fem.functionspace(domain, W_elem)
-
-# Variables y Funciones 
-wh = fem.Function(W)
-wh_o = fem.Function(W) 
-
-(d_star, phi0_star, lam_star, mu_star) = ufl.TestFunctions(W)
-
-d, phi0, lam, mu = ufl.split(wh)
-d_o, phi0_o, lam_o, mu_o = ufl.split(wh_o)
-
-# Parámetros (Basados paper)
-dt_val = 0.01                 # Paso de tiempo (dt) 
-t_ramp = 0.1                  # Tiempo de rampa de carga 
-t_final = 2.0                 # Tiempo final
-num_steps = int(t_final / dt_val)
-dt = fem.Constant(domain, dt_val)
-
-# Poroelasticidad
-k_val = 2.0e-7                
-rho_f = fem.Constant(domain, 1.0) 
-phi_bar = fem.Constant(domain, 0.1) 
-
-# Carga (Fuente)
-pa = fem.Constant(domain, 10000.0)   
-beta_max = 1.0e-4                     
-beta = fem.Constant(domain, 0.0)      
-
-# Cinematica y tensores
-
-I = ufl.Identity(gdim)
-f = I + ufl.grad(d) #
-j = ufl.det(f)      
-F = ufl.inv(f)      
-J = ufl.det(F)     
-
-# Modelo material hipereslastico
-
-C = fem.Constant(domain, 880.0) 
-B = fem.Constant(domain, 5.0e4)
-
-# Anisotropia parametros inspo script paper
-
-bff = 20.0
-bss = 10.0
-bnn = 20.0
-bfs = 10.0
-bfn = 10.0
-bsn = 10.0
-
-# Direcciones de fibra (alineadas con los ejes para el cubo) 
-f0 = ufl.as_vector([1.0, 0.0, 0.0])
-s0 = ufl.as_vector([0.0, 1.0, 0.0])
-n0 = ufl.as_vector([0.0, 0.0, 1.0])
-
-C_tensor = F.T * F
-E_green = 0.5 * (C_tensor - I) # Tensor de Green-Lagrange
-
-E_ff = ufl.inner(E_green * f0, f0)
-E_ss = ufl.inner(E_green * s0, s0)
-E_nn = ufl.inner(E_green * n0, n0)
-E_fs = ufl.inner(E_green * f0, s0)
-E_fn = ufl.inner(E_green * f0, n0)
-E_sn = ufl.inner(E_green * s0, n0)
-
-# Exponente Q 
-Q = bff * E_ff**2 + bss * E_ss**2 + bnn * E_nn**2 + \
-    bfs * (E_fs**2) + bfn * (E_fn**2) + bsn * (E_sn**2)
-
-# Anisotropica
-S_ff = 2.0 * bff * E_ff
-S_ss = 2.0 * bss * E_ss
-S_nn = 2.0 * bnn * E_nn
-S_fs = 2.0 * bfs * E_fs
-S_fn = 2.0 * bfn * E_fn
-S_sn = 2.0 * bsn * E_sn
-
-S = S_ff * ufl.outer(f0, f0) + S_ss * ufl.outer(s0, s0) + S_nn * ufl.outer(n0, n0) + \
-    S_fs * (ufl.outer(f0, s0) + ufl.outer(s0, f0)) + \
-    S_fn * (ufl.outer(f0, n0) + ufl.outer(n0, f0)) + \
-    S_sn * (ufl.outer(s0, n0) + ufl.outer(n0, s0))
-
-P_aniso = C * ufl.exp(Q) * (F * S)
-
-# Volumetrica
-
-P_vol = B * J**2 * ufl.inv(F.T)
-
-P = P_aniso + P_vol
-
-# Parametros presion paper script basado
-
-q1 = fem.Constant(domain, 1.333)
-q2 = fem.Constant(domain, 550.0)
-q3 = fem.Constant(domain, 10.0)
-
-def dp_P(Phi):
-    # Agregamos 'eps' para estabilidad numérica, evitando ln(0)
-    eps = fem.Constant(domain, 1e-10)
-    return (q1/q3) * ufl.exp(q3 * Phi) + q2 * ufl.ln(q3 * Phi + eps)
-
-Phi_actual = J * phi_bar # Phi = J * phi_bar
-Phi_ref = phi0
-
-p_tilde = dp_P(Phi_actual) - dp_P(ufl.conditional(ufl.gt(Phi_ref, 0.0), Phi_ref, 1e-10))
-
-theta = -beta * (mu - pa) # mu es la variable de presión mixta 
+except Exception as e:
+    print(f"❌ Error al cargar {MESH_FILENAME}: {e}. Generando malla de SLAB de respaldo.")
+    domain = mesh.create_unit_square(MPI.COMM_WORLD, 32, 32, mesh.CellType.triangle)
+    R_in = 0.0 # Parámetros ajustados para el SLAB
+    R_out = 1.0
 
 
-phi0_dt = (phi0 - phi0_o) / dt
+# ELEMENTOS ROBUSTOS
+k = 2
+V_el = element("Lagrange", domain.basix_cell(), k, shape=(domain.geometry.dim,))
+Q_el = element("Lagrange", domain.basix_cell(), k-1)
+V_mixed = mixed_element([V_el, Q_el])
+V = fem.functionspace(domain, V_mixed)
 
-# Equilibrio Mecánico 
-F_mech = (ufl.inner(j * P * ufl.inv(f.T), ufl.grad(d_star)) + ufl.inner(lam, ufl.div(d_star))) * ufl.dx
+# PARÁMETROS 
+mu = fem.Constant(domain, 1.0)
+lmbda = fem.Constant(domain, 100.0)
 
-# Incompresibilidad
-F_incomp = ufl.inner(j * (1 - phi0) - (1 - phi_bar), lam_star) * ufl.dx
+# Función para la solución
+u_p_ = fem.Function(V)
+u, p = split(u_p_)
 
-# Ecuación de Flujo (con k_val y theta)
-F_poro_A = (-ufl.inner(phi0_dt, mu_star) \
-            + ufl.inner(k_val * ufl.grad(mu), ufl.grad(mu_star)) \
-            - ufl.inner(1/rho_f * theta, mu_star)) * ufl.dx
+# Funciones test
+v, q = TestFunctions(V)
 
-# Definición de Presión
-F_poro_B = ufl.inner(mu - p_tilde, phi0_star) * ufl.dx
+# --- Neo-Hooke mixto (u, p) ---
 
-F_total = F_mech + F_incomp + F_poro_A + F_poro_B
+d = domain.geometry.dim
+I = Identity(d)
 
-# Condiciones Nulas testeo rapido
+# Desplazamiento u y presión p ya definidos como Function en su espacio
+# u_p_ = Function(W) con split(u_p_) -> (u, p)
 
-def left_boundary(x):
-    return np.isclose(x[0], 0)
-left_facets = mesh.locate_entities_boundary(domain, gdim - 1, left_boundary)
-left_dofs_x = fem.locate_dofs_topological(W.sub(0).sub(0), gdim - 1, left_facets)
-bc_left_x = fem.dirichletbc(0.0, left_dofs_x, W.sub(0).sub(0))
+F = ufl.variable(I + grad(u))
+J = ufl.det(F)
+C = F.T * F
+Ic = ufl.tr(C)
 
-def bottom_boundary(x):
-    return np.isclose(x[1], 0)
-bottom_facets = mesh.locate_entities_boundary(domain, gdim - 1, bottom_boundary)
-bottom_dofs_y = fem.locate_dofs_topological(W.sub(0).sub(1), gdim - 1, bottom_facets)
-bc_bottom_y = fem.dirichletbc(0.0, bottom_dofs_y, W.sub(0).sub(1))
+# Parte isocórica (deviatoric) tipo Neo-Hooke modificado
+psi_iso = (mu / 2) * (Ic - 2 - 2 * ufl.ln(J))
 
-def front_boundary(x):
-    return np.isclose(x[2], 0)
+# Parte volumétrica en formulación mixta
+psi_vol = -p * ufl.ln(J) + (1.0 / (2.0 * lmbda)) * p**2
 
-front_facets = mesh.locate_entities_boundary(domain, gdim - 1, front_boundary)
-front_dofs_z = fem.locate_dofs_topological(W.sub(0).sub(2), gdim - 1, front_facets)
-bc_front_z = fem.dirichletbc(0.0, front_dofs_z, W.sub(0).sub(2))
+psi = psi_iso + psi_vol
 
-bcs = [bc_left_x, bc_bottom_y, bc_front_z] 
+# Piola de 1ª especie
+P = ufl.diff(psi, F)
 
-# Solver no lineal
-problem = NonlinearProblem(F_total, wh, bcs=bcs)
+# Forma débil: equilibrio + ecuación de estado (ln J - p/λ = 0)
+G = (
+    inner(P, grad(v)) * dx
+    + (ufl.ln(J) - p / lmbda) * q * dx
+)
+
+
+# Jacobiano para Newton
+du = TrialFunction(V)          # V: espacio de desplazamientos dentro de W
+J_form = derivative(G, u_p_, du)
+
+
+# CONDICIONES DE BORDE, Readaptar considerando cuerpos complejos posiblemente, por ahora anillo
+
+def inner_boundary(x):
+    r = np.sqrt(x[0]**2 + x[1]**2)
+    # R_in es 0.1 en la malla de anillo.
+    return np.isclose(r, R_in)
+
+def outer_boundary(x):
+    r = np.sqrt(x[0]**2 + x[1]**2)
+    # R_out es 1.0 en la malla de anillo.
+    return np.isclose(r, R_out)
+
+inner_facets = mesh.locate_entities_boundary(domain, domain.topology.dim-1, inner_boundary)
+outer_facets = mesh.locate_entities_boundary(domain, domain.topology.dim-1, outer_boundary)
+
+# Fija u_x = 0 y u_y = 0 en la cara exterior!
+V0_outer, _ = V.sub(0).collapse()
+outer_dofs = fem.locate_dofs_topological((V.sub(0), V0_outer), domain.topology.dim-1, outer_facets)
+
+u_outer = fem.Function(V0_outer)
+u_outer.x.array[:] = 0.0
+bc_outer = fem.dirichletbc(u_outer, outer_dofs, V.sub(0))
+
+# Presión alveolar aplicada (Carga de Neumann)
+p_alv_const = fem.Constant(domain, 0.0)
+
+# Etiquetar la frontera interna
+fdim = domain.topology.dim - 1
+marked_facets = np.hstack([inner_facets])
+marked_values = np.hstack([np.full_like(inner_facets, 1)])
+sorted_facets = np.argsort(marked_facets)
+facet_tag = mesh.meshtags(domain, fdim, marked_facets[sorted_facets], marked_values[sorted_facets])
+ds = ufl.Measure("ds", domain=domain, subdomain_data=facet_tag)
+
+# Agregar término de presión (Neumann) a la forma débil
+n = ufl.FacetNormal(domain)
+G += inner(-p_alv_const * J * inv(F).T * n, v) * ds(1)
+
+bcs = [bc_outer]
+print("✓ BCs corregidas: Borde externo fijo (Dirichlet). Presión interna (Neumann) aplicada en borde interno.")
+
+# SOLVER CONFIGURADO
+problem = NonlinearProblem(G, u_p_, bcs=bcs, J=J_form)
 solver = NewtonSolver(MPI.COMM_WORLD, problem)
+solver.atol = 1e-8
+solver.rtol = 1e-8
+solver.max_it = 50
 solver.convergence_criterion = "incremental"
-solver.rtol = 1e-6 
-solver.max_it = 50 
 
-log.set_log_level(log.LogLevel.INFO)
+ksp = solver.krylov_solver
+opts = PETSc.Options()
+option_prefix = ksp.getOptionsPrefix()
+opts[f"{option_prefix}ksp_type"] = "gmres"
+opts[f"{option_prefix}pc_type"] = "lu"
+opts[f"{option_prefix}pc_factor_mat_solver_type"] = "mumps"
+ksp.setFromOptions()
 
-phi0_init_expr = fem.Expression(phi_bar, W.sub(1).element.interpolation_points())
-wh_o.sub(1).interpolate(phi0_init_expr)
-wh.sub(1).interpolate(phi0_init_expr)
-
-print(f"Iniciando simulación IPP (Test 2 - Cubo 3D) [fuente: 432]...")
-print(f"Parámetros: dt={dt_val}, t_ramp={t_ramp}, k={k_val}, pa={pa.value}")
-
-V_out_P1_vec = fem.functionspace(domain, ("Lagrange", 1, (gdim,)))
-d_out = fem.Function(V_out_P1_vec)
-d_out.name = "Desplazamiento_Inverso_P1"
-
-phi0_sol = wh.sub(1)
-mu_sol = wh.sub(3)
-phi0_sol.name = "Porosidad_Referencia"
-mu_sol.name = "Presion_Mixta"
-
-xdmf = io.XDMFFile(MPI.COMM_WORLD, "IPP_cubo_resultado.xdmf", "w")
-xdmf.write_mesh(domain)
-
-d_hat_sol_P2 = wh.sub(0) 
-d_out.interpolate(d_hat_sol_P2) 
-
-xdmf.write_function(d_out, 0.0) 
-xdmf.write_function(phi0_sol, 0.0)
-xdmf.write_function(mu_sol, 0.0)
-
-norm_phi0_form = fem.form(ufl.inner(phi0_sol, phi0_sol) * ufl.dx)
-norm_phi0_o_form = fem.form(ufl.inner(wh_o.sub(1), wh_o.sub(1)) * ufl.dx)
-
-for i in range(num_steps):
-    t_current = (i + 1) * dt_val
+# CARGA ADAPTATIVA
+def adaptive_load_increments(initial_disp, target_disp, max_steps=50):
+    increments = []
+    current = initial_disp
     
-    ramp_factor = min(1.0, t_current / t_ramp)
-    beta.value = beta_max * ramp_factor
+    while current < target_disp:
+        increments.append(current)
+        if current < target_disp * 0.1:
+            step = target_disp / 30
+        elif current < target_disp * 0.5:
+            step = target_disp / 20
+        else:
+            step = target_disp / 15
+            
+        current += step
+        if current > target_disp:
+            current = target_disp
     
-    print(f"Paso {i+1}/{num_steps}, (Pseudo) Tiempo {t_current:.3f}, Carga (beta): {ramp_factor*100:.1f}%")
+    increments.append(target_disp)
+    return np.unique(increments)
 
+initial_pressure = 0.01
+target_pressure = 1.0
+max_steps = 100
+
+load_values = adaptive_load_increments(initial_pressure, target_pressure, max_steps)
+num_steps = len(load_values) - 1
+
+print(f"Estrategia de carga adaptativa:")
+print(f"   - Presión objetivo: {target_pressure:.3f}")
+print(f"   - Número de pasos: {num_steps}")
+
+# Preparar espacios de visualización P1
+V_vis = fem.functionspace(domain, ("Lagrange", 1, (domain.geometry.dim,)))
+Q_vis = fem.functionspace(domain, ("Lagrange", 1))
+
+print("\n=== Iniciando simulación directa ===")
+
+convergence_history = []
+all_converged = True
+
+for i, pressure in enumerate(load_values[1:]):
+    step_size = pressure - load_values[i]
+    print(f"Paso {i+1}/{num_steps}, Presión = {pressure:.4f} (Δ = {step_size:.4f})")
+    
+    p_alv_const.value = pressure
+    
     try:
-        n_iter, converged = solver.solve(wh)
-        if not converged:
-            print("Newton no convergió.")
+        num_its, converged = solver.solve(u_p_)
+        
+        if converged:
+            print(f"   ✓ Converged in {num_its} iterations")
+            convergence_history.append(num_its)
+            
+            u_sol = u_p_.sub(0).collapse()
+            u_mag = fem.Function(Q_vis)
+            u_mag.interpolate(fem.Expression(ufl.sqrt(inner(u_sol, u_sol)), Q_vis.element.interpolation_points()))
+            max_deformation = np.max(u_mag.x.array)
+
+            print(f"   → Deformación máxima (Magnitud): {max_deformation:.4f}")
+            
+        else:
+            print(f"   ✗ FAILED to converge after {num_its} iterations")
+            all_converged = False
             break
+            
     except Exception as e:
-        print(f"Fallo el solver: {e}")
+        print(f"   ✗ ERROR: {e}")
+        all_converged = False
         break
 
-    wh_o.x.array[:] = wh.x.array
-    
-    if (i+1) % 10 == 0:
-        d_out.interpolate(wh.sub(0)) 
-        xdmf.write_function(d_out, t_current) 
-        xdmf.write_function(phi0_sol, t_current)
-        xdmf.write_function(mu_sol, t_current)
-    
-    norm_val = np.sqrt(fem.assemble_scalar(norm_phi0_form))
-    norm_val_o = np.sqrt(fem.assemble_scalar(norm_phi0_o_form))
-    norm_phi0_change = norm_val - norm_val_o
-    
-    if np.abs(norm_phi0_change) < 1e-7 and ramp_factor == 1.0:
-        print(f"Convergencia de estado estacionario alcanzada en el paso {i+1}.")
-        break
+print("\n=== Guardando resultados ===")
 
-xdmf.close()
-print("Simulación terminada.")
+if all_converged:
+    
+    print("--- Guardando datos para problema inverso (Alta fidelidad) ---")
+    
+    u_sol = u_p_.sub(0).collapse()
+    p_sol = u_p_.sub(1).collapse()
+    u_sol.name = "Displacement"
+    p_sol.name = "Pressure"
 
-norm_val_final = np.sqrt(fem.assemble_scalar(norm_phi0_form))
-print(f"Norma L2 de la porosidad de referencia (phi0) final: {norm_val_final:.4e}")
+    # --- 2. DATOS PARA VISUALIZACIÓN EN XDMF (P1) ---
+    print("\n--- Guardando resultados en XDMF para visualización (P1) ---")
+    
+    # Interpolar a P1 para XDMF
+    u_vis = fem.Function(V_vis)
+    u_vis.name = "Displacement"
+    u_vis.interpolate(u_sol)
+    
+    p_vis = fem.Function(Q_vis)
+    p_vis.name = "Pressure"
+    p_vis.interpolate(p_sol)
+    
+    # Guardar en XDMF (malla original)
+    xdmf_file = io.XDMFFile(domain.comm, os.path.join("simulation_results.xdmf"), "w")
+    xdmf_file.write_mesh(domain)
+    xdmf_file.write_function(u_vis, 0.0)
+    xdmf_file.write_function(p_vis, 0.0)
+    xdmf_file.close()
+    print("✓ XDMF guardado: simulation_results.xdmf")
+    
+    print("\n--- Creando malla deformada para visualización ---")
+        
+    # 1. Calcular nuevas coordenadas
+    original_coords = domain.geometry.x
+    displacement_at_vertices = u_vis.x.array.reshape((-1, domain.geometry.dim))
+    
+    displacement_3d = np.zeros_like(original_coords)
+    displacement_3d[:, :domain.geometry.dim] = displacement_at_vertices
+    new_coords = original_coords + displacement_3d
+    
+    # 2. CORRECCIÓN DE CONECTIVIDAD (Sin usar basix explícitamente)
+    # Obtenemos la topología de la malla actual
+    tdim = domain.topology.dim
+    domain.topology.create_connectivity(tdim, 0) # Generar mapa Celdas -> Vértices
+    connectivity = domain.topology.connectivity(tdim, 0)
+    
+    # Contamos cuántos vértices tiene la primera celda para saber el tamaño (ej. 3 para triángulos)
+    num_verts_per_cell = connectivity.links(0).size
+    
+    # Reconstruimos el array de celdas
+    cells_array = connectivity.array.reshape((-1, num_verts_per_cell))
+    cells_array = np.asarray(cells_array, dtype=np.int64)
+    
+    # 3. Crear la malla deformada
+    deformed_mesh = mesh.create_mesh(domain.comm, cells_array, new_coords[:, :domain.geometry.dim], domain.ufl_domain())
+    
+    # Crear funciones en malla deformada para guardar los datos
+    V_vis_deformed = fem.functionspace(deformed_mesh, ("Lagrange", 1, (deformed_mesh.geometry.dim,)))
+    Q_vis_deformed = fem.functionspace(deformed_mesh, ("Lagrange", 1))
+    
+    u_vis_def = fem.Function(V_vis_deformed)
+    u_vis_def.name = "Displacement"
+    u_vis_def.x.array[:] = u_vis.x.array
+    
+    p_vis_def = fem.Function(Q_vis_deformed)
+    p_vis_def.name = "Pressure"
+    p_vis_def.x.array[:] = p_vis.x.array
+    
+    # Guardar malla deformada en XDMF
+    xdmf_deformed = io.XDMFFile(deformed_mesh.comm, os.path.join("deformed_results.xdmf"), "w")
+    xdmf_deformed.write_mesh(deformed_mesh)
+    xdmf_deformed.write_function(u_vis_def, 0.0)
+    xdmf_deformed.write_function(p_vis_def, 0.0)
+    xdmf_deformed.close()
+    print("✓ XDMF deformado guardado: deformed_results.xdmf")
+
+else:
+    print(f"✗ Simulación no convergente. No se guardaron resultados en: deformed_results.xdmf")
