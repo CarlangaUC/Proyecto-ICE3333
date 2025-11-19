@@ -3,6 +3,7 @@ from AndersonAcceleration import AndersonAcceleration
 from Forms import *
 parameters["form_compiler"]["quadrature_degree"] = 6
 from sys import argv
+import os
 
 # Input parameters
 form = int(argv[1])
@@ -92,6 +93,10 @@ time = Constant(0)
 
 parameters={ "snes_error_if_not_converged": True, "snes_linesearch_type": "none", "snes_atol": 1e-12, "snes_rtol": 1e-4, "snes_stol": 0.0, 'snes_divergence_tolerance': 1e10}
 if monitor: parameters["snes_monitor"] = None
+
+# Ensure output directory exists
+os.makedirs("output", exist_ok=True)
+
 # Initialize and iterate
 i = 0
 anderson = AndersonAcceleration(sol0.sub(2), order_back, delay, restart=False)
@@ -99,7 +104,11 @@ FF = getBackwardProblem(time, dt, ramp_time, theta, p_source, functions, formula
 FFres = getBackwardProblem(time, dt, ramp_time, theta, p_source, functions, formulation, stationaryResidual=True)
 time.assign(ramp_time)
 res_vec = assemble(FFres, bcs=bcs)
-err0 = sqrt(res_vec.vector().inner(res_vec.vector()))
+
+# --- CORRECCIÓN FINAL: Usar .dat.norm para Cofunctions ---
+err0 = res_vec.dat.norm
+# ---------------------------------------------------------
+
 time.assign(0.0)
 if do_backward:
     outfile = File("output/pm-one-phase-2d-backward.pvd")
@@ -112,7 +121,11 @@ if do_backward:
         if t >= ramp_time: 
             anderson.get_next_vector(sol0.sub(2))
         assemble(FFres, bcs=bcs, tensor=res_vec)
-        err = sqrt(res_vec.vector().inner(res_vec.vector()))/err0
+        
+        # --- CORRECCIÓN FINAL ---
+        err = res_vec.dat.norm/err0
+        # ------------------------
+
         if i % printEvery == 0: print(f"Backward: It {i:4}, time {t:4.3f}, err={err:4.2e}")
         if err < ref_tol_back and t>= ramp_time:
             converged=True
@@ -122,8 +135,10 @@ if do_backward:
         i, t = i + 1, t+dt
 
 # Move mesh to reference configuration
-u1 = interpolate(u0, VuP1)
-mesh.coordinates.vector().axpy(1.0, u1)
+# FIX: Usar el espacio de funciones exacto de las coordenadas para evitar el ValueError
+u1 = Function(mesh.coordinates.function_space())
+u1.interpolate(u0)
+mesh.coordinates.assign(mesh.coordinates + u1)
 
 # Init forward solution
 sol.assign(sol0)
@@ -147,7 +162,11 @@ FF = getForwardProblem(time, dt, ramp_time, theta, p_source, functions, formulat
 FFres = getForwardProblem(time, dt, ramp_time, theta, p_source, functions, formulation, True)
 time.assign(ramp_time)
 res_vec = assemble(FFres, bcs=bcs)
-err0 = sqrt(res_vec.vector().inner(res_vec.vector()))
+
+# --- CORRECCIÓN FINAL ---
+err0 = res_vec.dat.norm
+# ------------------------
+
 time.assign(0.0)
 if do_forward:
     outfile = File("output/pm-one-phase-2d-forward.pvd")
@@ -161,7 +180,11 @@ if do_forward:
             anderson.get_next_vector(sol.sub(2))
 
         assemble(FFres, bcs=bcs, tensor=res_vec)
-        err = sqrt(res_vec.vector().inner(res_vec.vector()))/err0
+        
+        # --- CORRECCIÓN FINAL ---
+        err = res_vec.dat.norm/err0
+        # ------------------------
+
         if i % printEvery == 0: print(f"Forward: It {i:4}, time {t:4.3f}, err={err:4.2e}")
         if err < ref_tol_forw and t>= ramp_time:
             converged=True
