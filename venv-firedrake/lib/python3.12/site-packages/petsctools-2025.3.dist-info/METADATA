@@ -1,0 +1,41 @@
+Metadata-Version: 2.4
+Name: petsctools
+Version: 2025.3
+Summary: Pythonic extensions for petsc4py and slepc4py
+Maintainer-email: "Connor J. Ward" <c.ward20@imperial.ac.uk>
+License-Expression: LGPL-3.0-or-later
+Project-URL: Repository, https://github.com/firedrakeproject/petsctools
+Classifier: Intended Audience :: Science/Research
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: Unix
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: packaging
+Provides-Extra: petsc4py
+Requires-Dist: petsc4py; extra == "petsc4py"
+Provides-Extra: slepc4py
+Requires-Dist: slepc4py; extra == "slepc4py"
+Dynamic: license-file
+
+# petsctools
+
+https://firedrakeproject.org/petsctools
+
+## Copyright
+
+Copyright (C) 2025 Imperial College London and others
+
+petsctools is free software: you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+petsctools is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with petsctools. If not, see <https://www.gnu.org/licenses/>.

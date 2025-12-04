@@ -1,0 +1,221 @@
+# Chen-Babuska, 2D
+# Method in:
+# Chen Qi, Babuska Ivo (1995). Approximate optimal points for polynomial
+# interpolation of real functions in an interval and in a triangle.
+# Comp Meth App Mech Eng 128:405–417. doi:10.1016/0045-7825(95)00889-6
+# Computed in:
+# Roth, MJ (2005). Nodal configurations and Voronoi Tessellations for
+# triangular spectral elements. PhD thesis, University of Victoria
+Chen-Babuska, 2, 3,  2.111
+Chen-Babuska, 2, 4,  2.692
+Chen-Babuska, 2, 5,  3.301
+Chen-Babuska, 2, 6,  3.791
+Chen-Babuska, 2, 7,  4.391
+Chen-Babuska, 2, 8,  5.089
+Chen-Babuska, 2, 9,  5.918
+Chen-Babuska, 2, 10, 7.085
+Chen-Babuska, 2, 11, 7.266
+Chen-Babuska, 2, 12, 8.669
+Chen-Babuska, 2, 13, 9.291
+Chen-Babuska, 2, 14, 9.988
+Chen-Babuska, 2, 15, 10.306
+Chen-Babuska, 2, 16, 10.413
+Chen-Babuska, 2, 17, 10.254
+Chen-Babuska, 2, 18, 11.165
+Chen-Babuska, 2, 19, 12.025
+Chen-Babuska, 2, 20, 12.861
+Chen-Babuska, 2, 21, 13.630
+Chen-Babuska, 2, 22, 14.059
+Chen-Babuska, 2, 23, 14.725
+Chen-Babuska, 2, 24, 15.618
+Chen-Babuska, 2, 25, 15.319
+Chen-Babuska, 2, 26, 16.991
+Chen-Babuska, 2, 27, 17.670
+Chen-Babuska, 2, 28, 17.221
+Chen-Babuska, 2, 29, 18.031
+Chen-Babuska, 2, 30, 18.724
+# Chen-Babuska, 3D
+# Computed in:
+# Chen Qi, Babuska Ivo (1996). The optimal symmetrical points for polynomial
+# interpolation of real functions in the tetrahedron. Comp Meth App Mech Eng
+# 137:89–94. doi:10.1016/0045-7825(96)01051-1
+Chen-Babuska, 3, 4, 4.1120
+Chen-Babuska, 3, 5, 5.6158
+Chen-Babuska, 3, 6, 7.3632
+Chen-Babuska, 3, 7, 9.3659
+Chen-Babuska, 3, 8, 12.311
+Chen-Babuska, 3, 9, 15.659
+# Fekete points
+# Computed in (Table 4.2, First Column):
+# Roth, MJ (2005). Nodal configurations and Voronoi Tessellations for
+# triangular spectral elements. PhD thesis, University of Victoria
+Fekete, 2, 3,  2.113
+Fekete, 2, 4,  2.729
+Fekete, 2, 5,  3.611
+Fekete, 2, 6,  4.171
+Fekete, 2, 7,  4.928
+Fekete, 2, 8,  5.905
+Fekete, 2, 9,  6.803
+Fekete, 2, 10, 7.852
+Fekete, 2, 11, 7.907
+Fekete, 2, 12, 8.472
+Fekete, 2, 13, 9.279
+Fekete, 2, 14, 9.959
+Fekete, 2, 15, 10.021
+Fekete, 2, 16, 10.689
+Fekete, 2, 17, 11.534
+Fekete, 2, 18, 13.128
+Fekete, 2, 19, 12.634
+Fekete, 2, 20, 15.216
+Fekete, 2, 21, 15.921
+Fekete, 2, 22, 15.684
+Fekete, 2, 23, 15.876
+Fekete, 2, 24, 16.443
+Fekete, 2, 25, 17.405
+Fekete, 2, 26, 19.975
+Fekete, 2, 27, 20.333
+Fekete, 2, 28, 18.756
+Fekete, 2, 29, 21.935
+Fekete, 2, 30, 22.603
+# Optimal Lebesgue
+# Computed in:
+# Roth, MJ (2005). Nodal configurations and Voronoi Tessellations for
+# triangular spectral elements. PhD thesis, University of Victoria.
+# uri:http://hdl.handle.net/1828/44 
+Lebesgue, 2, 3,  2.108
+Lebesgue, 2, 4,  2.587
+Lebesgue, 2, 5,  3.081
+Lebesgue, 2, 6,  3.595
+Lebesgue, 2, 7,  4.143
+Lebesgue, 2, 8,  4.766
+Lebesgue, 2, 9,  5.486
+Lebesgue, 2, 10, 5.921
+Lebesgue, 2, 11, 6.724
+Lebesgue, 2, 12, 7.187
+Lebesgue, 2, 13, 7.253
+Lebesgue, 2, 14, 7.706
+Lebesgue, 2, 15, 8.243
+# Heinrichs Symmetric
+# Computed in:
+# Heinrichs, W (2005). Improved Lebesgue constants on the triangle. J Comp Phys
+# 207:625–638. doi:10.1016/j.jcp.2005.02.002
+Heinrichs-symmetric, 2, 6,  3.87 
+Heinrichs-symmetric, 2, 9,  5.89
+Heinrichs-symmetric, 2, 12, 7.59
+Heinrichs-symmetric, 2, 15, 9.25
+# Heinrichs Asymmetric
+# Computed in:
+# Heinrichs, W (2005). Improved Lebesgue constants on the triangle. J Comp Phys
+# 207:625–638. doi:10.1016/j.jcp.2005.02.002
+Heinrichs-asymmetric, 2, 6,  3.67 
+Heinrichs-asymmetric, 2, 9,  5.58
+Heinrichs-asymmetric, 2, 12, 7.12
+Heinrichs-asymmetric, 2, 15, 8.41
+# Hesthaven electrostatic, 2D
+# Computed in:
+# Hesthaven, JS (1998). From electrostatics to almost optimal nodal sets for
+# polynomial interpolation in a simplex. SIAM JNumer Anal 35:655–676.
+# doi:10.1137/S003614299630587X
+Hesthaven, 2, 3,  2.113
+Hesthaven, 2, 4,  2.588
+Hesthaven, 2, 5,  3.196
+Hesthaven, 2, 6,  4.075
+Hesthaven, 2, 7,  4.780
+Hesthaven, 2, 8,  5.855
+Hesthaven, 2, 9,  6.886
+Hesthaven, 2, 10, 8.466
+Hesthaven, 2, 11, 10.144
+Hesthaven, 2, 12, 12.637
+# Hesthaven-Teng electrostatic, 3D
+# Computed in:
+# Hesthaven JS, Teng CH (2000). Stable spectral methods on tetrahedral
+# elements. SIAM J Sci Comp 21:2352–2380. doi:10.1137/S1064827598343723
+Hesthaven-Teng, 3, 4,  4.0774
+Hesthaven-Teng, 3, 5,  5.3470
+Hesthaven-Teng, 3, 6,  7.3391
+Hesthaven-Teng, 3, 7,  9.7588
+Hesthaven-Teng, 3, 8,  13.626
+Hesthaven-Teng, 3, 9,  18.901
+Hesthaven-Teng, 3, 10, 27.190
+# Rapetti-Sommmariva-Vianello, Lebesgue minimizing
+# Computed in:
+# Rapetti, F, Sommariva, A, and Vianello, M, (2012). On the generation of
+# symmetric Lebesgue-like points in the triangle. Journal of Computational and
+# Applied Mathematics, 236(18), pp.4925-4932. doi:10.1016/j.cam.2011.11.023
+Rapetti-Sommariva-Vianello-leb, 2, 4,  2.42
+Rapetti-Sommariva-Vianello-leb, 2, 5,  2.90
+Rapetti-Sommariva-Vianello-leb, 2, 6,  3.39
+Rapetti-Sommariva-Vianello-leb, 2, 7,  3.94
+Rapetti-Sommariva-Vianello-leb, 2, 8,  4.55
+Rapetti-Sommariva-Vianello-leb, 2, 9,  5.28
+Rapetti-Sommariva-Vianello-leb, 2, 10, 5.63
+Rapetti-Sommariva-Vianello-leb, 2, 11, 6.45
+Rapetti-Sommariva-Vianello-leb, 2, 12, 6.90
+Rapetti-Sommariva-Vianello-leb, 2, 13, 7.59
+Rapetti-Sommariva-Vianello-leb, 2, 14, 8.31
+Rapetti-Sommariva-Vianello-leb, 2, 15, 9.07
+Rapetti-Sommariva-Vianello-leb, 2, 16, 8.58
+Rapetti-Sommariva-Vianello-leb, 2, 17, 9.12
+Rapetti-Sommariva-Vianello-leb, 2, 18, 9.88
+# Rapetti-Sommmariva-Vianello, Lebesgue minimizing, Gauss-Lobatto trace
+# Computed in:
+# Rapetti, F, Sommariva, A, and Vianello, M, (2012). On the generation of
+# symmetric Lebesgue-like points in the triangle. Journal of Computational and
+# Applied Mathematics, 236(18), pp.4925-4932. doi:10.1016/j.cam.2011.11.023
+Rapetti-Sommariva-Vianello-lebgl, 2, 4,  2.59
+Rapetti-Sommariva-Vianello-lebgl, 2, 5,  3.08
+Rapetti-Sommariva-Vianello-lebgl, 2, 6,  3.59
+Rapetti-Sommariva-Vianello-lebgl, 2, 7,  4.14
+Rapetti-Sommariva-Vianello-lebgl, 2, 8,  5.21
+Rapetti-Sommariva-Vianello-lebgl, 2, 9,  5.51
+Rapetti-Sommariva-Vianello-lebgl, 2, 10, 5.93
+Rapetti-Sommariva-Vianello-lebgl, 2, 11, 6.56
+Rapetti-Sommariva-Vianello-lebgl, 2, 12, 7.13
+Rapetti-Sommariva-Vianello-lebgl, 2, 13, 7.74
+Rapetti-Sommariva-Vianello-lebgl, 2, 14, 8.31
+Rapetti-Sommariva-Vianello-lebgl, 2, 15, 9.07
+Rapetti-Sommariva-Vianello-lebgl, 2, 16, 8.58
+Rapetti-Sommariva-Vianello-lebgl, 2, 17, 9.12
+Rapetti-Sommariva-Vianello-lebgl, 2, 18, 9.88
+# Rapetti-Sommmariva-Vianello, Lebesgue minimizing, Gauss-Lobatto trace, symmetric
+# Computed in:
+# Rapetti, F, Sommariva, A, and Vianello, M, (2012). On the generation of
+# symmetric Lebesgue-like points in the triangle. Journal of Computational and
+# Applied Mathematics, 236(18), pp.4925-4932. doi:10.1016/j.cam.2011.11.023
+Rapetti-Sommariva-Vianello-lebgls, 2, 4,  2.59
+Rapetti-Sommariva-Vianello-lebgls, 2, 5,  3.08
+Rapetti-Sommariva-Vianello-lebgls, 2, 6,  3.59
+Rapetti-Sommariva-Vianello-lebgls, 2, 7,  4.14
+Rapetti-Sommariva-Vianello-lebgls, 2, 8,  4.77
+Rapetti-Sommariva-Vianello-lebgls, 2, 9,  5.49
+Rapetti-Sommariva-Vianello-lebgls, 2, 10, 6.29
+Rapetti-Sommariva-Vianello-lebgls, 2, 11, 7.00
+Rapetti-Sommariva-Vianello-lebgls, 2, 12, 7.26
+Rapetti-Sommariva-Vianello-lebgls, 2, 13, 8.58
+Rapetti-Sommariva-Vianello-lebgls, 2, 14, 8.83
+Rapetti-Sommariva-Vianello-lebgls, 2, 15, 8.91
+Rapetti-Sommariva-Vianello-lebgls, 2, 16, 10.66
+Rapetti-Sommariva-Vianello-lebgls, 2, 17, 11.41
+Rapetti-Sommariva-Vianello-lebgls, 2, 18, 12.69
+# Luo-Pozrikidis, basic
+# Computed in:
+# Luo, H, and Pozrikidis, C, (2006). A Lobatto interpolation grid in the
+# tetrahedron. IMA journal of applied mathematics, 71(2), pp.298-313.
+# doi:10.1093/imamat/hxh111
+Luo-Pozrikidis-basic, 3, 4, 4.07
+Luo-Pozrikidis-basic, 3, 5, 5.38
+Luo-Pozrikidis-basic, 3, 6, 7.53
+Luo-Pozrikidis-basic, 3, 7, 10.17
+Luo-Pozrikidis-basic, 3, 8, 14.63
+Luo-Pozrikidis-basic, 3, 9, 20.46
+# Luo-Pozrikidis, optimized
+# Computed in:
+# Luo, H, and Pozrikidis, C, (2006). A Lobatto interpolation grid in the
+# tetrahedron. IMA journal of applied mathematics, 71(2), pp.298-313.
+# doi:10.1093/imamat/hxh111
+Luo-Pozrikidis-opt, 3, 4, 4.07
+Luo-Pozrikidis-opt, 3, 5, 5.70
+Luo-Pozrikidis-opt, 3, 6, 8.84
+Luo-Pozrikidis-opt, 3, 7, 11.48
+Luo-Pozrikidis-opt, 3, 8, 15.52
+Luo-Pozrikidis-opt, 3, 9, 19.76

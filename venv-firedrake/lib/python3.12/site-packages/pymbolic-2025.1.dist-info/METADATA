@@ -1,0 +1,75 @@
+Metadata-Version: 2.4
+Name: pymbolic
+Version: 2025.1
+Summary: A package for symbolic computation
+Project-URL: Documentation, https://documen.tician.de/pymbolic
+Project-URL: Homepage, https://github.com/inducer/pymbolic
+Author-email: Andreas Kloeckner <inform@tiker.net>
+License-Expression: MIT
+License-File: LICENSE
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Other Audience
+Classifier: Intended Audience :: Science/Research
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Scientific/Engineering :: Mathematics
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Topic :: Utilities
+Requires-Python: >=3.10
+Requires-Dist: constantdict
+Requires-Dist: pytools>=2025.2
+Requires-Dist: typing-extensions>=4.10
+Provides-Extra: matchpy
+Requires-Dist: matchpy; extra == 'matchpy'
+Provides-Extra: numpy
+Requires-Dist: numpy>=1.6; extra == 'numpy'
+Provides-Extra: test
+Requires-Dist: basedpyright; extra == 'test'
+Requires-Dist: optype; extra == 'test'
+Requires-Dist: pytest; extra == 'test'
+Requires-Dist: ruff; extra == 'test'
+Description-Content-Type: text/x-rst
+
+Pymbolic: Easy Expression Trees and Term Rewriting
+==================================================
+
+.. image:: https://gitlab.tiker.net/inducer/pymbolic/badges/main/pipeline.svg
+    :alt: Gitlab Build Status
+    :target: https://gitlab.tiker.net/inducer/pymbolic/commits/main
+.. image:: https://github.com/inducer/pymbolic/actions/workflows/ci.yml/badge.svg
+    :alt: Github Build Status
+    :target: https://github.com/inducer/pymbolic/actions/workflows/ci.yml
+.. image:: https://badge.fury.io/py/pymbolic.svg
+    :alt: Python Package Index Release Page
+    :target: https://pypi.org/project/pymbolic
+.. image:: https://zenodo.org/badge/2016193.svg
+    :alt: Zenodo DOI for latest release
+    :target: https://zenodo.org/badge/latestdoi/2016193
+
+Pymbolic is a small expression tree and symbolic manipulation library. Two
+things set it apart from other libraries of its kind:
+
+* Users can easily write their own symbolic operations, simply by deriving
+  from the builtin visitor classes.
+* Users can easily add their own symbolic entities to do calculations
+  with.
+
+Pymbolic currently understands regular arithmetic expressions, derivatives,
+sparse polynomials, fractions, term substitution, expansion. It automatically
+performs constant folding, and it can compile its expressions into Python
+bytecode for fast(er) execution.
+
+If you are looking for a full-blown Computer Algebra System, look at
+`sympy <https://pypi.org/project/sympy/>`__ or
+`PyGinac <https://pyginac.sourceforge.net/>`__. If you are looking for a
+basic, small and extensible set of symbolic operations, pymbolic may
+well be for you.
+
+Resources:
+
+* `PyPI package <https://pypi.org/project/pymbolic/>`__
+* `Documentation <https://documen.tician.de/pymbolic/>`__
+* `Source code (GitHub) <https://github.com/inducer/pymbolic>`__

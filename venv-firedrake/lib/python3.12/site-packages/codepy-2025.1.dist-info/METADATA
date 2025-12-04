@@ -1,0 +1,48 @@
+Metadata-Version: 2.4
+Name: codepy
+Version: 2025.1
+Summary: Generate and execute native code at run time
+Project-URL: Documentation, https://documen.tician.de/codepy
+Project-URL: Homepage, https://github.com/inducer/codepy
+Author-email: Andreas Kloeckner <inform@tiker.net>
+License: MIT
+License-File: LICENSE
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Other Audience
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Topic :: Utilities
+Requires-Python: >=3.10
+Requires-Dist: cgen>=2020.1
+Requires-Dist: numpy>=1.6
+Requires-Dist: platformdirs>=2.2.0
+Requires-Dist: pytools>=2022.1.14
+Requires-Dist: typing-extensions>=4.5
+Provides-Extra: test
+Requires-Dist: pytest; extra == 'test'
+Requires-Dist: ruff; extra == 'test'
+Description-Content-Type: text/x-rst
+
+.. image:: https://gitlab.tiker.net/inducer/codepy/badges/main/pipeline.svg
+    :alt: Gitlab Build Status
+    :target: https://gitlab.tiker.net/inducer/codepy/commits/main
+.. image:: https://github.com/inducer/codepy/actions/workflows/ci.yml/badge.svg
+    :alt: Github Build Status
+    :target: https://github.com/inducer/codepy/actions/workflows/ci.yml
+.. image:: https://badge.fury.io/py/codepy.svg
+    :alt: Python Package Index Release Page
+    :target: https://pypi.org/project/codepy/
+
+CodePy is a C/C++ metaprogramming toolkit for Python. It helps you compile
+source code and dynamically load it into the Python interpreter.
+This facility also works in conjunction with with `PyCuda
+<http://mathema.tician.de/software/pycuda>`_.  Dynamic compilation and linking
+are so far only supported in Linux with the GNU toolchain.
+
+See also the `documentation <http://documen.tician.de/codepy>`_ and the
+`git tree <http://github.com/inducer/codepy>`_.

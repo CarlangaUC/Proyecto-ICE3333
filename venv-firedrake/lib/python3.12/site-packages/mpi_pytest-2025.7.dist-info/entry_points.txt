@@ -1,0 +1,2 @@
+[pytest11]
+mpi-pytest = pytest_mpi.plugin

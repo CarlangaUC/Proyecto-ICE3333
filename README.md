@@ -1,167 +1,108 @@
 # Recuperación de Configuración Stress-Free en Pulmón
 
-## Descripción
+## Descripción General
 
-Este proyecto implementa un flujo de trabajo para recuperar la configuración libre de tensiones (stress-free) de un pulmón a partir de imágenes de CT, basado en la formulación poromecánica con surfactante de Avilés-Rojas & Hurtado (2025).
+Este proyecto implementa un marco computacional para resolver el **Problema Inverso Geométrico** (Inverse Elastostatics) en biomecánica pulmonar. El objetivo principal es recuperar la configuración de referencia libre de tensiones (*stress-free*) del parénquima pulmonar a partir de una geometría deformada (obtenida mediante tomografía computarizada - CT) y condiciones de carga conocidas (presión alveolar y distribución de surfactante).
 
-## Estructura del Proyecto
+El modelo incorpora la física avanzada del **surfactante pulmonar** dentro de un marco de poromecánica finita, basándose en la formulación termodinámicamente consistente de Avilés-Rojas & Hurtado (2025).
 
-```
-lung_inverse/
-├── README.md                    # Este archivo
-├── phase1_forward_surfactant.py # Problema directo con surfactante
-├── phase2_inverse_motion.py     # Problema inverso (formulación correcta)
-├── phase2_inverse_stressfree.py # Versión alternativa (con limitaciones)
-├── phase3_lung_stressfree.py    # Aplicación a pulmón 3D real
-├── phase1_results/              # Resultados Fase 1
-├── phase2_results/              # Resultados Fase 2
-└── phase3_results/              # Resultados Fase 3
-```
+## 1. Formulación Constitutiva (Modelo Directo)
 
-## Fundamento Teórico
+El comportamiento del parénquima se modela como un medio poroso saturado sometido a grandes deformaciones. El Tensor de Esfuerzos de Segundo Piola-Kirchhoff total ($\mathbf{S}$) se descompone en tres contribuciones:
 
-### Modelo Constitutivo (Paper JMPS 2025)
+$$\mathbf{S}_{total} = \mathbf{S}_{el} + \mathbf{S}_{surf} + \mathbf{S}_{air}$$
 
-El tensor de esfuerzos del parénquima pulmonar es:
+### A. Elasticidad del Tejido ($\mathbf{S}_{el}$)
+Se utiliza un modelo hiperelástico exponencial (tipo Fung) para la matriz de tejido conectivo:
+$$\Psi^{el} = c \left( \exp(a J_1^2 + b J_2) - 1 \right)$$
+$$\mathbf{S}_{el} = 2 \frac{\partial \Psi^{el}}{\partial \mathbf{C}}$$
 
-$$\mathbf{S} = \frac{\partial \Psi^{el}}{\partial \mathbf{E}} + P_\gamma J \mathbf{C}^{-1} - P_{alv} J \mathbf{C}^{-1}$$
+### B. Tensión Superficial y Surfactante ($\mathbf{S}_{surf}$)
+Esta es la contribución principal que diferencia este modelo de la elasticidad estándar. Representa la presión de colapso generada por la interfaz aire-líquido:
+$$\mathbf{S}_{surf} = P_\gamma J \mathbf{C}^{-1}$$
 
-donde:
-- $\Psi^{el}$: Energía elástica Fung
-- $P_\gamma = \frac{2\gamma}{R_I}\left(\frac{\Phi_R}{\Phi}\right)^{1/3}$: Presión de colapso
-- $\gamma$: Tensión superficial (depende del surfactante)
-- $P_{alv}$: Presión alveolar
+Donde la presión de colapso macroscópica $P_\gamma$ se deriva de la Ley de Laplace generalizada para medios porosos:
+$$P_\gamma = \frac{2\gamma(\Gamma)}{R_{RI}} \left( \frac{\Phi_R}{\Phi} \right)^{1/3}$$
 
-### Formulación de Movimiento Inverso
+* $\gamma(\Gamma)$: Tensión superficial dependiente de la concentración de surfactante (Ec. de estado).
+* $\Phi$: Porosidad actual (fracción de volumen de aire).
+* $R_{RI}$: Radio alveolar representativo.
 
-Para recuperar la configuración stress-free, usamos:
+### C. Presión del Aire ($\mathbf{S}_{air}$)
+La presión alveolar ($P_{alv}$) actúa hidrostáticamente sobre el volumen de poro deformado:
+$$\mathbf{S}_{air} = - P_{alv} J \mathbf{C}^{-1}$$
 
-- **Configuración observada** $\Omega_{obs}$: La malla de CT
-- **Configuración stress-free** $\Omega_{sf}$: La que buscamos
-- **Mapeo inverso**: $\boldsymbol{\phi}^{-1}: \Omega_{obs} \to \Omega_{sf}$
+---
 
-Parametrización:
+## 2. Formulación del Problema Inverso
+
+Para recuperar la geometría de referencia $\Omega_R$ a partir de la configuración observada $\Omega_{obs}$, se utiliza el método de **Movimiento Inverso** (Inverse Motion).
+
+### Cinemática Inversa
+Definimos el mapeo inverso $\boldsymbol{\chi}^{-1}: \Omega_{obs} \to \Omega_R$ mediante un campo de desplazamiento inverso $\mathbf{w}(\mathbf{x})$:
 $$\mathbf{X} = \mathbf{x} - \mathbf{w}(\mathbf{x})$$
 
-donde $\mathbf{w}$ es el desplazamiento inverso (incógnita).
+A diferencia de los métodos iterativos aditivos, aquí se formula el gradiente de deformación "forward" ($\mathbf{F}$) directamente en función de la incógnita $\mathbf{w}$:
 
-Gradientes:
-- Inverso: $\mathbf{f} = \mathbf{I} - \nabla\mathbf{w}$
-- Forward: $\mathbf{F} = \mathbf{f}^{-1}$
+1.  **Gradiente del mapeo inverso:** $\mathbf{f} = \nabla_{\mathbf{x}} \mathbf{X} = \mathbf{I} - \nabla_{\mathbf{x}} \mathbf{w}$
+2.  **Gradiente de deformación constitutivo:** $\mathbf{F} = \mathbf{f}^{-1} = (\mathbf{I} - \nabla_{\mathbf{x}} \mathbf{w})^{-1}$
 
-## Flujo de Trabajo
+### Ecuación de Gobierno (Equilibrio)
+El problema se resuelve imponiendo el equilibrio de fuerzas directamente sobre la malla deformada (Euleriana). Se busca el campo $\mathbf{w}$ que satisfaga la forma débil:
 
-### Fase 1: Validación del Modelo Directo
+$$\int_{\Omega_{obs}} (\mathbf{F} \cdot \mathbf{S}(\mathbf{F})) : \nabla_{\mathbf{x}} \mathbf{v} \cdot \mathbf{F} \det(\mathbf{f}) \, d\Omega = 0 \quad \forall \mathbf{v}$$
 
-```bash
-python phase1_forward_surfactant.py
-```
+Esta formulación permite encontrar la geometría stress-free en un **único paso de solución no lineal** (Newton-Raphson), evitando la necesidad de algoritmos de optimización costosos.
 
-**Objetivo**: Verificar que el modelo con surfactante funciona correctamente.
+---
 
-**Entrada**: Parámetros del material (Tabla 1 del paper)
+## 3. Hipótesis y Suposiciones del Modelo
 
-**Salida**:
-- `phase1_results/inflation.pvd`: Evolución temporal
-- `phase1_results/deformed_state.pvd`: Estado final
-- `phase1_results/forward_data.npz`: Datos para Fase 2
+La implementación actual realiza las siguientes asunciones para hacer el problema tratable computacionalmente:
 
-### Fase 2: Problema Inverso en 2D
+1.  **Estado Cuasi-Estático:** Se asume que la configuración observada (CT) es un estado de equilibrio estático. Se desprecian los términos inerciales.
+2.  **Surfactante "Congelado":** Para el paso inverso, se toma la distribución de surfactante observada ($\Gamma_{obs}$) como un dato de entrada fijo. No se resuelve la historia temporal de adsorción/desorción hacia atrás en el tiempo.
+3.  **Presión Uniforme (Modelo de un Compartimento):** Se asume que la presión alveolar $P_{alv}$ es uniforme en todo el dominio (sin gradientes de presión por flujo de Darcy en el estado final).
+4.  **Gravedad Despreciable:** Dado que las fuerzas elásticas y de tensión superficial dominan a escala alveolar, se desprecian las fuerzas másicas ($\mathbf{B} = \mathbf{0}$) en la formulación del equilibrio.
+5.  **Homogeneidad Material:** Los parámetros constitutivos ($c, a, b, \Phi_R$) se asumen constantes espacialmente en esta versión del código.
 
-```bash
-python phase2_inverse_motion.py
-```
+---
 
-**Objetivo**: Recuperar configuración stress-free a partir del estado deformado.
+## 4. Implementación Numérica
 
-**Entrada**: Datos de Fase 1
+El problema se resuelve utilizando el **Método de Elementos Finitos (FEM)** con la librería [Firedrake](https://www.firedrakeproject.org/).
 
-**Salida**:
-- `phase2_results/inverse_motion_result.pvd`: Desplazamiento inverso
-- Verificación: $\|\mathbf{w} - \mathbf{u}_{obs}\|$ debe ser pequeño
+### Espacios Funcionales
+Se utiliza una discretización mixta compatible:
+* **Desplazamientos ($\mathbf{u}, \mathbf{w}$):** Elementos Lagrangianos Cuadráticos Continuos ($CG_2$ o $P_2$). Esto es necesario para capturar correctamente los gradientes de deformación finita.
+* **Variables Internas (Surfactante $\Gamma$, Porosidad $\Phi$):** Elementos Discontinuos Constantes ($DG_0$ o $P_0$). Estas variables se definen localmente por elemento (*cell-wise*) y no requieren continuidad espacial.
 
-### Fase 3: Aplicación a Pulmón 3D
+### Solver No Lineal
+* **Método:** Newton-Raphson con búsqueda de línea (Line Search).
+* **Precondicionador:** Factorización LU directa (MUMPS) para robustez en 2D, o métodos iterativos para 3D.
+* **Jacobiano:** Calculado mediante Diferenciación Automática Simbólica (UFL) proporcionada por Firedrake, asegurando la consistencia tangente exacta del modelo de surfactante altamente no lineal.
 
-```bash
-python phase3_lung_stressfree.py
-```
+---
 
-**Objetivo**: Obtener geometría stress-free de pulmón real.
+## 5. Parámetros del Modelo
 
-**Entrada**: 
-- Malla de CT (`lung_mesh.msh`)
-- Presión pleural estimada
+Los siguientes parámetros, obtenidos de Avilés-Rojas & Hurtado (2025), se utilizan para caracterizar el tejido y el surfactante:
 
-**Salida**:
-- `phase3_results/lung_observed.pvd`: Malla original con campos
-- `phase3_results/lung_stressfree.pvd`: Malla stress-free
-- `phase3_results/lung_inverse_data.npz`: Coordenadas y datos
-
-## Parámetros del Modelo
-
-| Parámetro | Valor | Unidades | Descripción |
-|-----------|-------|----------|-------------|
-| $\Phi_R$ | 0.74 | - | Porosidad de referencia |
-| $R_{RI}$ | 0.11 | mm | Radio interno alveolar |
-| $c$ | 2.5 | kPa | Módulo Fung |
-| $a$ | 0.433 | - | Parámetro Fung |
-| $b$ | -0.61 | - | Parámetro Fung |
-| $\gamma_0$ | 70×10⁻⁶ | N/mm | Tensión superficial máxima |
-| $\gamma_{min}$ | 0 | N/mm | Tensión superficial mínima |
-| $\Gamma_\infty$ | 3×10⁻⁹ | g/mm² | Concentración umbral |
-
-## Requisitos
-
-- Python 3.8+
-- Firedrake (con adjoint)
-- NumPy, SciPy
-- ParaView (para visualización)
-
-### Instalación de Firedrake
-
-```bash
-curl -O https://raw.githubusercontent.com/firedrakeproject/firedrake/master/scripts/firedrake-install
-python3 firedrake-install --install pyadjoint
-source firedrake/bin/activate
-```
-
-## Notas Importantes
-
-### Sobre la Identificabilidad
-
-La formulación aditiva $\mathbf{F} = \mathbf{I} + \nabla(\mathbf{u} + \mathbf{w})$ tiene problemas de degeneración porque $\mathbf{u}$ y $\mathbf{w}$ no son separables. 
-
-Por eso usamos la **formulación de movimiento inverso**:
-- $\mathbf{F} = (\mathbf{I} - \nabla\mathbf{w})^{-1}$
-- El problema es resolver el equilibrio directamente para $\mathbf{w}$
-- No hay ambigüedad entre desplazamiento elástico y predeformación
-
-### Limitaciones
-
-1. **Homogeneidad**: El modelo asume propiedades uniformes
-2. **Surfactante simplificado**: Solo regímenes Langmuir e insoluble
-3. **Sin árbol bronquial**: Vías aéreas no modeladas explícitamente
-4. **Presión pleural**: Debe estimarse o medirse
-
-### Mejoras Futuras
-
-- [ ] Incorporar heterogeneidad espacial de parámetros
-- [ ] Añadir cinética completa del surfactante (Ec. 47)
-- [ ] Acoplar con modelo de vías aéreas
-- [ ] Validación con datos experimentales
+| Parámetro | Símbolo | Valor Típico | Descripción |
+|-----------|:-------:|--------------|-------------|
+| **Geometría** | | | |
+| Porosidad Ref. | $\Phi_R$ | 0.74 | Fracción de aire en estado stress-free |
+| Radio Alveolar | $R_{RI}$ | 0.11 mm | Escala de longitud microestructural |
+| **Elasticidad** | | | |
+| Rigidez | $c$ | 2.5 kPa | Módulo de rigidez del tejido |
+| Exponente 1 | $a$ | 0.433 | No-linealidad isotrópica |
+| Exponente 2 | $b$ | -0.610 | No-linealidad volumétrica |
+| **Surfactante** | | | |
+| Tensión Máx. | $\gamma_0$ | 70 mN/m | Tensión de agua pura / límite superior |
+| Tensión Equil. | $\gamma_{inf}$| 22 mN/m | Tensión de equilibrio dinámico |
+| Conc. Crítica | $\Gamma_{inf}$| 3.0$\times 10^{-9}$ g/mm² | Concentración de referencia |
 
 ## Referencias
 
-1. Avilés-Rojas, N., & Hurtado, D.E. (2025). Integrating pulmonary surfactant into lung mechanical simulations: A continuum approach to surface tension in poromechanics. *J. Mech. Phys. Solids*, 203, 106174.
-
-2. Govindjee, S., & Mihalic, P.A. (1996). Computational methods for inverse finite elastostatics. *Comput. Methods Appl. Mech. Engrg.*, 136, 47-57.
-
-3. Sellier, M. (2011). An iterative method for the inverse elasto-static problem. *J. Fluids Struct.*, 27, 1461-1470.
-
-## Autor
-
-Código desarrollado para investigación en biomecánica pulmonar computacional.
-
-## Licencia
-
-MIT License
+1.  **Modelo Físico:** Avilés-Rojas, N., & Hurtado, D.E. (2025). Integrating pulmonary surfactant into lung mechanical simulations: A continuum approach to surface tension in poromechanics. *Journal of the Mechanics and Physics of Solids*, 203, 106174.
+2.  **Método Numérico:** Govindjee, S., & Mihalic, P.A. (1996). Computational methods for inverse finite elastostatics. *Computer Methods in Applied Mechanics and Engineering*, 136, 47-57.

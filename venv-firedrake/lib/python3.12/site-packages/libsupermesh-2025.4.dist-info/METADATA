@@ -1,0 +1,46 @@
+Metadata-Version: 2.2
+Name: libsupermesh
+Version: 2025.4
+Summary: A parallel supermeshing library
+Author: Iakovos Panourgias, Patrick E. Farrell, Matteo Croci
+Author-Email: "James R. Maddison" <j.r.maddison@ed.ac.uk>, Jack Betteridge <J.Betteridge@imperial.ac.uk>
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: License :: OSI Approved :: GNU Lesser General Public License v2 or later (LGPLv2+)
+Classifier: Programming Language :: Python
+Classifier: Operating System :: OS Independent
+Project-URL: Repository, https://github.com/firedrakeproject/libsupermesh
+Requires-Dist: rtree>=1.2
+Description-Content-Type: text/markdown
+
+## libsupermesh ##
+
+libsupermesh parallel supermeshing library.
+
+## Getting started ##
+
+Requires [spatialindex](https://github.com/libspatialindex/libspatialindex) to be installed.
+
+Documentation can be found in the libsupermesh manual. This can be built using:
+
+```
+#!sh
+
+cd build
+cmake .. -DENABLE_DOCS=1
+make doc
+```
+
+The manual can then be found in build/doc/manual.pdf.
+
+## License ##
+
+libsupermesh is available under the [GNU Lesser General Public License version 2.1](http://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html). See COPYING for complete copyright information.
+
+## Authors ##
+
+* Dr. James R. Maddison, School of Mathematics and Maxwell Institute for Mathematical Sciences, University of Edinburgh, UK [j.r.maddison@ed.ac.uk](mailto:j.r.maddison@ed.ac.uk)
+* Mr. Iakovos Panourgias, EPCC, University of Edinburgh, UK
+* Dr. Patrick E. Farrell, Mathematical Institute, University of Oxford, UK,
+  and Center for Biomedical Computing, Simula Research Laboratory, Oslo, Norway
+* Mr. Matteo Croci, Mathematical Institute, University of Oxford, UK
+* Dr. Jack Betteridge, Department of Mathematics, Imperial College London, UK
