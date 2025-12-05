@@ -1,0 +1,4 @@
+[console_scripts]
+firedrake-clean = firedrake.scripts.firedrake_clean:main
+firedrake-preprocess-bibtex = firedrake.scripts.firedrake_preprocess_bibtex:main
+pyop2-clean = pyop2.compilation:clear_compiler_disk_cache

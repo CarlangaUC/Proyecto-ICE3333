@@ -1,0 +1,58 @@
+Metadata-Version: 2.4
+Name: cgen
+Version: 2025.1
+Summary: C/C++ source generation from an AST
+Project-URL: Documentation, https://documen.tician.de/cgen
+Project-URL: Homepage, https://github.com/inducer/cgen
+Author-email: Andreas Kloeckner <inform@tiker.net>
+License-Expression: MIT
+License-File: LICENSE
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Other Audience
+Classifier: Intended Audience :: Science/Research
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Topic :: Utilities
+Requires-Python: >=3.10
+Requires-Dist: numpy>=1.6
+Requires-Dist: pytools>=2022.1.14
+Requires-Dist: typing-extensions>=4.5
+Provides-Extra: test
+Requires-Dist: pytest; extra == 'test'
+Requires-Dist: ruff; extra == 'test'
+Description-Content-Type: text/x-rst
+
+cgen: An Abstract Syntax Tree for C, in Python
+----------------------------------------------
+
+.. image:: https://gitlab.tiker.net/inducer/cgen/badges/main/pipeline.svg
+    :alt: Gitlab Build Status
+    :target: https://gitlab.tiker.net/inducer/cgen/commits/main
+.. image:: https://github.com/inducer/cgen/actions/workflows/ci.yml/badge.svg
+    :alt: Github Build Status
+    :target: https://github.com/inducer/cgen/actions/workflows/ci.yml
+.. image:: https://badge.fury.io/py/cgen.svg
+    :alt: Python Package Index Release Page
+    :target: https://pypi.org/project/cgen/
+
+cgen offers a simple abstract syntax tree for C and related languages
+(C++/CUDA/OpenCL) to allow structured code generation from Python.
+To represent mathematical expressions, cgen can be used with `pymbolic
+<https://github.com/inducer/pymbolic>`__.
+
+Places on the web related to cgen:
+
+* `Python package index <https://pypi.org/project/cgen>`__ (download releases)
+* `Documentation <https://documen.tician.de/cgen>`__ (read how things work)
+* `Github <https://github.com/inducer/cgen>`__ (get latest source code, file bugs)
+
+cgen is licensed under the liberal `MIT license
+<https://en.wikipedia.org/wiki/MIT_License>`__ and free for commercial, academic,
+and private use. All of cgen's dependencies can be automatically installed from
+the package index after using::
+
+    pip install cgen

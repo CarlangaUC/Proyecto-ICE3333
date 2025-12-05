@@ -1,0 +1,73 @@
+Metadata-Version: 2.4
+Name: fenics-ufl
+Version: 2025.2.0
+Summary: Unified Form Language
+Author: UFL contributors
+Maintainer: FEniCS Steering Council
+Maintainer-email: fenics-steering-council@googlegroups.com
+License-Expression: LGPL-3.0-or-later
+Project-URL: homepage, https://fenicsproject.org
+Project-URL: repository, https://github.com/fenics/ufl.git
+Project-URL: documentation, https://docs.fenicsproject.org
+Project-URL: issues, https://github.com/FEniCS/ufl/issues
+Project-URL: funding, https://numfocus.org/donate
+Requires-Python: >=3.10.0
+Description-Content-Type: text/markdown
+License-File: COPYING
+License-File: COPYING.LESSER
+Requires-Dist: numpy
+Provides-Extra: lint
+Requires-Dist: mypy; extra == "lint"
+Requires-Dist: ruff; extra == "lint"
+Provides-Extra: typing
+Requires-Dist: types-colorama; extra == "typing"
+Provides-Extra: docs
+Requires-Dist: sphinx; extra == "docs"
+Requires-Dist: sphinx_rtd_theme; extra == "docs"
+Provides-Extra: test
+Requires-Dist: pytest; extra == "test"
+Provides-Extra: ci
+Requires-Dist: coveralls; extra == "ci"
+Requires-Dist: coverage; extra == "ci"
+Requires-Dist: pytest-cov; extra == "ci"
+Requires-Dist: pytest-xdist; extra == "ci"
+Requires-Dist: fenics-ufl[docs]; extra == "ci"
+Requires-Dist: fenics-ufl[lint]; extra == "ci"
+Requires-Dist: fenics-ufl[test]; extra == "ci"
+Requires-Dist: fenics-ufl[typing]; extra == "ci"
+Dynamic: license-file
+
+# UFL - Unified Form Language
+
+[![UFL CI](https://github.com/FEniCS/ufl/actions/workflows/pythonapp.yml/badge.svg)](https://github.com/FEniCS/ufl/actions/workflows/pythonapp.yml)
+[![Spack build](https://github.com/FEniCS/ufl/actions/workflows/spack.yml/badge.svg)](https://github.com/FEniCS/ufl/actions/workflows/spack.yml)
+[![Coverage Status](https://coveralls.io/repos/github/FEniCS/ufl/badge.svg?branch=main)](https://coveralls.io/github/FEniCS/ufl?branch=main)
+
+The Unified Form Language (UFL) is a domain specific language for
+declaration of finite element discretizations of variational forms. More
+precisely, it defines a flexible interface for choosing finite element
+spaces and defining expressions for weak forms in a notation close to
+mathematical notation.
+
+UFL is part of the FEniCS Project. For more information, visit
+https://www.fenicsproject.org
+
+## Documentation
+
+Documentation can be viewed at https://docs.fenicsproject.org
+
+## License
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
